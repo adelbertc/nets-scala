@@ -17,9 +17,10 @@ resolvers ++= Seq(
 // addCompilerPlugin("org.brianmckenna" % "wartremover" % "0.5" cross CrossVersion.full)
 
 libraryDependencies ++= Seq(
-  "com.nicta"   %% "rng"            % "1.1",
-  "org.scalaz"  %% "scalaz-core"    % "7.0.5",
-  "org.scalaz"  %% "scalaz-effect"  % "7.0.5"
+  "com.nicta"       %% "rng"            % "1.1",
+  "org.scalaz"      %% "scalaz-core"    % "7.0.5",
+  "org.scalaz"      %% "scalaz-effect"  % "7.0.5",
+  "org.spire-math"  %% "spire"          % "0.7.1"
 )
 
 scalacOptions ++= Seq(
