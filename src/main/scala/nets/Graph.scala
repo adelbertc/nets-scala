@@ -79,13 +79,19 @@ final class Graph[A, W] private(
 }
 
 object Graph {
-  def emptyDirected[A, W]: Graph[A, W] = new Graph(==>>.empty, true)
+  def emptyDirected[A : Order, W](vs: Seq[A]): Graph[A, W] =
+    vs.foldLeft(nullDirected[A, W])((g, v) => g.addVertex(v))
 
-  def emptyUndirected[A, W]: Graph[A, W] = new Graph(==>>.empty, false)
+  def emptyUndirected[A : Order, W](vs: Seq[A]): Graph[A, W] =
+    vs.foldLeft(nullUndirected[A, W])((g, v) => g.addVertex(v))
+
+  def nullDirected[A, W]: Graph[A, W] = new Graph(==>>.empty, true)
+
+  def nullUndirected[A, W]: Graph[A, W] = new Graph(==>>.empty, false)
 
   def fromDirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] =
-    es.foldLeft(emptyDirected[A, W])((g, e) => g.addEdge(e))
+    es.foldLeft(nullDirected[A, W])((g, e) => g.addEdge(e))
 
   def fromUndirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] =
-    es.foldLeft(emptyUndirected[A, W])((g, e) => g.addEdge(e))
+    es.foldLeft(nullUndirected[A, W])((g, e) => g.addEdge(e))
 }
