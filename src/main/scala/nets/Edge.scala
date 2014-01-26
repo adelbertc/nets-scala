@@ -1,6 +1,7 @@
 package nets
 
-import scalaz.{ Order, Ordering }
+import scalaz.{ Monoid, Order, Ordering }
+import scalaz.syntax.monoid._
 
 import spire.algebra.{ Rig }
 
@@ -17,9 +18,9 @@ object Edge extends EdgeInstances {
 }
 
 trait EdgeInstances {
-  implicit def edgeInstances[A : Order, W]: Order[Edge[A, W]] =
+  implicit def edgeInstances[A, W](implicit A: Order[A]): Order[Edge[A, W]] =
     new Order[Edge[A, W]] {
       override def order(x: Edge[A, W], y: Edge[A, W]): Ordering =
-        Order[A].order(x.to, y.to)
+        A.order(x.from, y.from) |+| A.order(x.to, y.to)
     }
 }
