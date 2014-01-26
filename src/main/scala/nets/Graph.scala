@@ -89,8 +89,6 @@ final class Graph[A, W] private(
 
   def isConnected(implicit A: Order[A]): Boolean = directed.isStronglyConnected
 
-  def isWeaklyConnected(implicit A: Order[A], W: Rig[W]): Boolean = undirected.isConnected
-
   def isStronglyConnected(implicit A: Order[A]): Boolean =
     if (order =/= 1) {
       val r = for {
@@ -99,6 +97,8 @@ final class Graph[A, W] private(
               } yield if (b.keySet === vertexSet) true else false
       r.fold(false)(identity)
     } else true
+
+  def isWeaklyConnected(implicit A: Order[A], W: Rig[W]): Boolean = undirected.isConnected
 
   def undirected(implicit A: Order[A]): Graph[A, W] =
     if (isDirected) {
@@ -127,12 +127,9 @@ object Graph extends GraphInstances {
   def fromDirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] =
     es.foldLeft(nullDirected[A, W])((g, e) => g.addEdge(e))
 
-  def fromUndirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] =
-    es.foldLeft(nullUndirected[A, W])((g, e) => g.addEdge(e))
-
-  def fromDirectedEdgesWC[A : Order, W : Rig](es: Seq[Edge[A, W]]): Option[Graph[A, W]] = {
-    val g = fromDirectedEdges(es)
-    if (g.isWeaklyConnected) Some(g) else None
+  def fromUndirectedEdgesC[A : Order, W : Rig](es: Seq[Edge[A, W]]): Option[Graph[A, W]] = {
+    val g = fromUndirectedEdges(es)
+    if (g.isConnected) Some(g) else None
   }
 
   def fromDirectedEdgesSC[A : Order, W : Rig](es: Seq[Edge[A, W]]): Option[Graph[A, W]] = {
@@ -140,10 +137,13 @@ object Graph extends GraphInstances {
     if (g.isStronglyConnected) Some(g) else None
   }
 
-  def fromUndirectedEdgesC[A : Order, W : Rig](es: Seq[Edge[A, W]]): Option[Graph[A, W]] = {
-    val g = fromUndirectedEdges(es)
-    if (g.isConnected) Some(g) else None
+  def fromDirectedEdgesWC[A : Order, W : Rig](es: Seq[Edge[A, W]]): Option[Graph[A, W]] = {
+    val g = fromDirectedEdges(es)
+    if (g.isWeaklyConnected) Some(g) else None
   }
+
+  def fromUndirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] =
+    es.foldLeft(nullUndirected[A, W])((g, e) => g.addEdge(e))
 }
 
 trait GraphInstances {
