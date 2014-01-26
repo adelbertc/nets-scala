@@ -7,6 +7,9 @@ import scalaz.syntax.monoid._
 import spire.algebra.{ Rig }
 
 final class Edge[A, W] private(val from: A, val to: A, val weight: W) {
+  def hasEndpoints(from2: A, to2: A)(implicit A: Equal[A]): Boolean =
+    (from === from2) && (to === to2)
+
   def reverse: Edge[A, W] = new Edge(to, from, weight)
 }
 

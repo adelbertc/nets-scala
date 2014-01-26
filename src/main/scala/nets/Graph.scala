@@ -6,6 +6,7 @@ import scalaz.{ ==>>, Equal, NonEmptyList, Order }
 import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.std.set._
+import scalaz.syntax.foldable._
 import scalaz.syntax.monoid._
 import scalaz.syntax.order._
 
@@ -25,12 +26,10 @@ final class Graph[A, W] private(
   def degree(u: A)(implicit A: Order[A]): Option[Int] =
     adjList.lookup(u).map(_.size)
 
-  def hasVertex(u: A)(implicit A: Order[A]): Boolean = memberVertex(u)
+  def hasVertex(u: A)(implicit A: Order[A]): Boolean = adjList.member(u)
 
   def neighbors(u: A)(implicit A: Order[A]): Option[IndexedSet[Edge[A, W]]] =
     adjList.lookup(u)
-
-  def memberVertex(u: A)(implicit A: Order[A]): Boolean = adjList.member(u)
 
   def order: Int = adjList.size
 
@@ -45,17 +44,33 @@ final class Graph[A, W] private(
     new Graph(adjList |+| toInsert, isDirected)
   }
 
+  def connects(u: A, v: A)(implicit A: Order[A], W: Rig[W]): Boolean =
+    (for {
+      a <- adjList.lookup(u)
+      e <- Edge.unweighted[A, W](u, v)
+    } yield a.contains(e)).fold(false)(identity)
+
   def edges: List[Edge[A, W]] = adjList.values.flatMap(_.toList)
 
-  def hasEdge(e: Edge[A, W])(implicit A: Order[A]): Boolean = memberEdge(e)
+  def getEdge(u: A, v: A)(implicit A: Order[A]): Option[Edge[A, W]] =
+    for {
+      a <- adjList.lookup(u)
+      e <- a.toList.find(_.hasEndpoints(u, v))
+    } yield e
 
-  def memberEdge(e: Edge[A, W])(implicit A: Order[A]): Boolean =
-    adjList.lookup(e.from).map(_.contains(e)).isEmpty
+  def hasEdge(u: A, v: A)(implicit A: Order[A]): Boolean =
+    getEdge(u, v).nonEmpty
+
+  def hasEdgeE(e: Edge[A, W])(implicit A: Order[A]): Boolean =
+    adjList.lookup(e.from).map(_.contains(e)).fold(false)(identity)
 
   def size: Int = {
     val bidirectionalEdges = adjList.fold(0)((_, ns, acc) => acc + ns.size)
     if (isDirected) bidirectionalEdges else bidirectionalEdges / 2
   }
+
+  def weight(u: A, v: A)(implicit A: Order[A]): Option[W] =
+    getEdge(u, v).map(_.weight)
 
   /* Traversal functions */
   def bfs(root: A)(implicit A: Order[A]): Option[A ==>> Int] = {
@@ -80,12 +95,22 @@ final class Graph[A, W] private(
     bfsAux(==>>.singleton(root, 0), Queue(root))
   }
 
-  def hasPath(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A]): Boolean =
-    (p.tail.foldRight((true, p.head)) {
-      case (ce, p@(b, pe)) =>
-        if (b === false) p // no reason to create a new tuple..
-        else if (ce.from === pe.to && hasEdge(ce)) (true, ce) else p
-    })._1
+  def costE(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A], W: Rig[W]): Option[W] =
+    if (hasEdgePath(p)) {
+      Some(p.foldLeft(W.zero)((a, e) => W.plus(a, e.weight)))
+    } else None
+
+  def cost(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Option[W] = ???
+
+  def hasEdgePath(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A], W: Rig[W]): Boolean =
+    hasPath(p.map(e => e.from -> e.to))
+
+  def hasPath(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Boolean =
+    if (connects(p.head._1, p.head._2))
+      (p.tail.foldRight(Some(p.head._2): Option[A]) {
+        case (ce@(u, v), o) => o.flatMap(p => if (p === u && connects(u, v)) Some(v) else None)
+      }).nonEmpty
+    else false
 
   def isConnected(implicit A: Order[A]): Boolean = directed.isStronglyConnected
 
