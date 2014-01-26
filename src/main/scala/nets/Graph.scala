@@ -2,7 +2,7 @@ package nets
 
 import scala.collection.immutable.{ Queue, Seq }
 
-import scalaz.{ ==>>, Equal, Order }
+import scalaz.{ ==>>, Equal, NonEmptyList, Order }
 import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.std.set._
@@ -47,7 +47,7 @@ final class Graph[A, W] private(
 
   def edges: List[Edge[A, W]] = adjList.values.flatMap(_.toList)
 
-  def hadEdge(e: Edge[A, W])(implicit A: Order[A]): Boolean = memberEdge(e)
+  def hasEdge(e: Edge[A, W])(implicit A: Order[A]): Boolean = memberEdge(e)
 
   def memberEdge(e: Edge[A, W])(implicit A: Order[A]): Boolean =
     adjList.lookup(e.from).map(_.contains(e)).isEmpty
@@ -79,6 +79,13 @@ final class Graph[A, W] private(
     
     bfsAux(==>>.singleton(root, 0), Queue(root))
   }
+
+  def hasPath(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A]): Boolean =
+    (p.tail.foldRight((true, p.head)) {
+      case (ce, p@(b, pe)) =>
+        if (b === false) p // no reason to create a new tuple..
+        else if (ce.from === pe.to && hasEdge(ce)) (true, ce) else p
+    })._1
 
   def isConnected(implicit A: Order[A]): Boolean = directed.isStronglyConnected
 
