@@ -2,8 +2,9 @@ package nets
 
 import scala.collection.immutable.{ Queue, Seq }
 
-import scalaz.{ ==>>, Order }
+import scalaz.{ ==>>, Equal, Order }
 import scalaz.std.anyVal._
+import scalaz.std.list._
 import scalaz.std.set._
 import scalaz.syntax.monoid._
 import scalaz.syntax.order._
@@ -105,7 +106,7 @@ final class Graph[A, W] private(
   val isUndirected: Boolean = !isDirected
 }
 
-object Graph {
+object Graph extends GraphInstances {
   def emptyDirected[A : Order, W](vs: Seq[A]): Graph[A, W] =
     vs.foldLeft(nullDirected[A, W])((g, v) => g.addVertex(v))
 
@@ -136,4 +137,12 @@ object Graph {
     val g = fromUndirectedEdges(es)
     if (g.isConnected) Some(g) else None
   }
+}
+
+trait GraphInstances {
+  implicit def graphEqual[A : Order, W]: Equal[Graph[A, W]] =
+    new Equal[Graph[A, W]] {
+      override def equal(a1: Graph[A, W], a2: Graph[A, W]): Boolean =
+        (a1.vertices === a2.vertices) && (a1.edges === a2.edges)
+    }
 }

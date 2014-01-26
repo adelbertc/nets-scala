@@ -4,6 +4,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 
 import scalaz.{ Equal, Monoid, Order }
+import scalaz.std.vector._
 import scalaz.syntax.order._
 
 /** Set that supports O(logn) insert for O(1) random access */
@@ -137,5 +138,11 @@ trait IndexedSetInstances {
       override def append(f1: IndexedSet[A], f2: => IndexedSet[A]): IndexedSet[A] = f1.union(f2)
 
       override def zero: IndexedSet[A] = IndexedSet.empty
+    }
+
+  implicit def indexedSetEqual[A : Equal]: Equal[IndexedSet[A]] =
+    new Equal[IndexedSet[A]] {
+      override def equal(a1: IndexedSet[A], a2: IndexedSet[A]): Boolean =
+        a1.toVector === a2.toVector
     }
 }
