@@ -6,7 +6,7 @@ description := "network analysis"
 
 version := "0.0.1"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.3"
 
 licenses += ("BSD-3-Clause", url("http://www.opensource.org/licenses/BSD-3-Clause"))
 
@@ -14,7 +14,7 @@ resolvers ++= Seq(
   "Sonatype Public" at "https://oss.sonatype.org/content/groups/public"
 )
 
-addCompilerPlugin("org.brianmckenna" % "wartremover" % "0.6" cross CrossVersion.full)
+addCompilerPlugin("org.brianmckenna" %% "wartremover" % "0.7")
 
 libraryDependencies ++= Seq(
   "com.nicta"       %% "rng"            % "1.1",
