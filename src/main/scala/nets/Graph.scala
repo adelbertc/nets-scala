@@ -5,8 +5,9 @@ import scala.collection.immutable.{ Queue, Seq }
 import scalaz.{ ==>>, Equal, NonEmptyList, Order }
 import scalaz.std.anyVal._
 import scalaz.std.list._
+import scalaz.std.option._
 import scalaz.std.set._
-import scalaz.syntax.foldable._
+import scalaz.syntax.traverse._
 import scalaz.syntax.monoid._
 import scalaz.syntax.order._
 
@@ -43,12 +44,6 @@ final class Graph[A, W] private(
     val toInsert = if (isDirected) oneWay else oneWay.insert(e.to, IndexedSet.singleton(e.reverse))
     new Graph(adjList |+| toInsert, isDirected)
   }
-
-  def connects(u: A, v: A)(implicit A: Order[A], W: Rig[W]): Boolean =
-    (for {
-      a <- adjList.lookup(u)
-      e <- Edge.unweighted[A, W](u, v)
-    } yield a.contains(e)).fold(false)(identity)
 
   def edges: List[Edge[A, W]] = adjList.values.flatMap(_.toList)
 
@@ -96,19 +91,20 @@ final class Graph[A, W] private(
   }
 
   def costE(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A], W: Rig[W]): Option[W] =
-    if (hasEdgePath(p)) {
+    if (hasPathE(p)) {
       Some(p.foldLeft(W.zero)((a, e) => W.plus(a, e.weight)))
     } else None
 
-  def cost(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Option[W] = ???
+  def cost(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Option[W] =
+    (p.traverseU { case (u, v) => getEdge(u, v) }).flatMap(costE)
 
-  def hasEdgePath(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A], W: Rig[W]): Boolean =
+  def hasPathE(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A], W: Rig[W]): Boolean =
     hasPath(p.map(e => e.from -> e.to))
 
   def hasPath(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Boolean =
-    if (connects(p.head._1, p.head._2))
+    if (hasEdge(p.head._1, p.head._2))
       (p.tail.foldRight(Some(p.head._2): Option[A]) {
-        case (ce@(u, v), o) => o.flatMap(p => if (p === u && connects(u, v)) Some(v) else None)
+        case (ce@(u, v), o) => o.flatMap(p => if (p === u && hasEdge(u, v)) Some(v) else None)
       }).nonEmpty
     else false
 
