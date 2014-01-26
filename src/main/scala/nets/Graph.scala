@@ -39,7 +39,7 @@ final class Graph[A, W] private(
   def vertices: List[A] = adjList.keys
 
   /* Edge-centric functions */
-  def addEdge(e: Edge[A, W])(implicit A: Order[A], W: Rig[W]): Graph[A, W] = {
+  def addEdge(e: Edge[A, W])(implicit A: Order[A]): Graph[A, W] = {
     val oneWay = ==>>.singleton(e.from, IndexedSet.singleton(e))
     val toInsert = if (isDirected) oneWay else oneWay.insert(e.to, IndexedSet.singleton(e.reverse))
     new Graph(adjList |+| toInsert, isDirected)
@@ -93,7 +93,7 @@ final class Graph[A, W] private(
       r.fold(false)(identity)
     } else true
 
-  def undirected(implicit A: Order[A], W: Rig[W]): Graph[A, W] =
+  def undirected(implicit A: Order[A]): Graph[A, W] =
     if (isDirected) {
       val res = edges.map(e => e.to -> IndexedSet.singleton(e.reverse))
       val al = ==>>.fromListWith(res)(_ union _)
