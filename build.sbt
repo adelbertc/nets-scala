@@ -2,7 +2,7 @@ name := "nets"
 
 organization := "com.adelbertc"
 
-description := "network analysis"
+description := "Simple graph library."
 
 version := "0.0.1"
 

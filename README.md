@@ -1,5 +1,5 @@
 # nets
-Minimal graph (graph theory-graph, not.. charts/plots) library for Scala.
+Simple graph (graph theory-graph, not.. charts/plots) library for Scala.
 The library is designed primarily around my research work on large-scale
 graph analysis in the context of online social networks. Currently
 the only plan is to have a simple `Graph` class that handles directed,
