@@ -3,6 +3,7 @@ package nets
 import scala.collection.immutable.{ Queue, Seq }
 
 import scalaz.{ ==>>, Order }
+import scalaz.syntax.monoid._
 import scalaz.syntax.order._
 
 import spire.algebra.{ Rig }
@@ -12,22 +13,46 @@ final class Graph[A, W] private(
     val isDirected: Boolean) {
 
   /* Vertex-centric functions */
+  def addVertex(u: A)(implicit A: Order[A]): Graph[A, W] =
+    new Graph(adjList.insert(u, IndexedSet.empty[Edge[A, W]]), isDirected)
+
+  def addVertexIfMissing(u: A)(implicit A: Order[A]): Graph[A, W] =
+    if (adjList.member(u)) this else addVertex(u)
+
   def degree(u: A)(implicit A: Order[A]): Option[Int] =
     adjList.lookup(u).map(_.size)
+
+  def hasVertex(u: A)(implicit A: Order[A]): Boolean = memberVertex(u)
+
   def neighbors(u: A)(implicit A: Order[A]): Option[IndexedSet[Edge[A, W]]] =
     adjList.lookup(u)
-  def nodes: List[A] = vertices
+
+  def memberVertex(u: A)(implicit A: Order[A]): Boolean = adjList.member(u)
+
   def order: Int = adjList.size
+
   def vertices: List[A] = adjList.keys
 
   /* Edge-centric functions */
+  def addEdge(e: Edge[A, W])(implicit A: Order[A], W: Rig[W]): Graph[A, W] = {
+    val oneWay = ==>>.singleton(e.from, IndexedSet.singleton(e))
+    val toInsert = if (isDirected) oneWay else oneWay.insert(e.to, IndexedSet.singleton(e.reverse))
+    new Graph(adjList |+| toInsert, isDirected)
+  }
+
   def edges: List[Edge[A, W]] = adjList.values.flatMap(_.toList)
+
+  def hadEdge(e: Edge[A, W])(implicit A: Order[A]): Boolean = memberEdge(e)
+
+  def memberEdge(e: Edge[A, W])(implicit A: Order[A]): Boolean =
+    adjList.lookup(e.from).map(_.contains(e)).isEmpty
 
   def size: Int = {
     val bidirectionalEdges = adjList.fold(0)((_, ns, acc) => acc + ns.size)
     if (isDirected) bidirectionalEdges else bidirectionalEdges / 2
   }
 
+  /* Traversal functions */
   def bfs(root: A)(implicit A: Order[A]): Option[A ==>> Int] = {
     def bfsStep(map: A ==>> Int, queue: Queue[A], nbors: IndexedSet[Edge[A, W]], value: Int): (A ==>> Int, Queue[A]) =
       nbors.foldRight((map, queue)) {
@@ -54,31 +79,13 @@ final class Graph[A, W] private(
 }
 
 object Graph {
-  def fromDirectedEdges[A : Order, W](es: Seq[Edge[A, W]]): Graph[A, W] = {
-    val adjacencyList =
-      es.foldLeft(==>>.empty[A, IndexedSet[Edge[A, W]]]) { (map, edge) =>
-        if (edge.from === edge.to)
-          map
-        else if (map.member(edge.from))
-          map.insert(edge.from, IndexedSet.singleton(edge))
-        else
-          map.adjust(edge.from, _.insert(edge))
-      }
-    new Graph(adjacencyList, true)
-  }
+  def emptyDirected[A, W]: Graph[A, W] = new Graph(==>>.empty, true)
 
-  def fromUndirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] = {
-    val adjacencyList =
-      es.foldLeft(==>>.empty[A, IndexedSet[Edge[A, W]]]) { (map, edge) =>
-        val tempMap =
-          if (edge.from === edge.to) map
-          else if (map.member(edge.from)) map.insert(edge.from, IndexedSet.singleton(edge))
-          else map.adjust(edge.from, _.insert(edge))
+  def emptyUndirected[A, W]: Graph[A, W] = new Graph(==>>.empty, false)
 
-        if (edge.from === edge.to) map
-        else if (tempMap.member(edge.to)) tempMap.insert(edge.to, IndexedSet.singleton(edge.reverse))
-        else tempMap.adjust(edge.to, _.insert(edge.reverse))
-      }
-    new Graph(adjacencyList, false)
-  }
+  def fromDirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] =
+    es.foldLeft(emptyDirected[A, W])((g, e) => g.addEdge(e))
+
+  def fromUndirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] =
+    es.foldLeft(emptyUndirected[A, W])((g, e) => g.addEdge(e))
 }

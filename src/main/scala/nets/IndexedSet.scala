@@ -3,7 +3,7 @@ package nets
 import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 
-import scalaz.{ Equal, Order }
+import scalaz.{ Equal, Monoid, Order }
 import scalaz.syntax.order._
 
 /** Set that supports O(logn) insert for O(1) random access */
@@ -102,7 +102,7 @@ final class IndexedSet[A] private(private val repr: Vector[A]) {
     }
 }
 
-object IndexedSet {
+object IndexedSet extends IndexedSetInstances {
   def empty[A : Order]: IndexedSet[A] =
     new IndexedSet(Vector.empty)
 
@@ -129,4 +129,13 @@ object IndexedSet {
     }
     binarySearchAux(0, repr.size - 1)
   }
+}
+
+trait IndexedSetInstances {
+  implicit def indexedSetMonoid[A : Order]: Monoid[IndexedSet[A]] =
+    new Monoid[IndexedSet[A]] {
+      override def append(f1: IndexedSet[A], f2: => IndexedSet[A]): IndexedSet[A] = f1.union(f2)
+
+      override def zero: IndexedSet[A] = IndexedSet.empty
+    }
 }
