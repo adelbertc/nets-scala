@@ -21,8 +21,7 @@ final class Graph[A, W] private(
   def vertices: List[A] = adjList.keys
 
   /* Edge-centric functions */
-  def edges: List[Edge[A, W]] = 
-    adjList.toList.flatMap { case (_, nbors) => nbors.toList }
+  def edges: List[Edge[A, W]] = adjList.values.flatMap(_.toList)
 
   def size: Int = {
     val bidirectionalEdges = adjList.fold(0)((_, ns, acc) => acc + ns.size)
@@ -72,19 +71,13 @@ object Graph {
     val adjacencyList =
       es.foldLeft(==>>.empty[A, IndexedSet[Edge[A, W]]]) { (map, edge) =>
         val tempMap =
-            if (edge.from === edge.to)
-              map
-            else if (map.member(edge.from))
-              map.insert(edge.from, IndexedSet.singleton(edge))
-            else
-              map.adjust(edge.from, _.insert(edge))
+          if (edge.from === edge.to) map
+          else if (map.member(edge.from)) map.insert(edge.from, IndexedSet.singleton(edge))
+          else map.adjust(edge.from, _.insert(edge))
 
-        if (edge.from === edge.to)
-          map
-        else if (tempMap.member(edge.to))
-          tempMap.insert(edge.to, IndexedSet.singleton(edge.reverse))
-        else
-          tempMap.adjust(edge.to, _.insert(edge.reverse))
+        if (edge.from === edge.to) map
+        else if (tempMap.member(edge.to)) tempMap.insert(edge.to, IndexedSet.singleton(edge.reverse))
+        else tempMap.adjust(edge.to, _.insert(edge.reverse))
       }
     new Graph(adjacencyList, false)
   }
