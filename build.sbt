@@ -18,8 +18,8 @@ addCompilerPlugin("org.brianmckenna" %% "wartremover" % "0.7")
 
 libraryDependencies ++= Seq(
   "com.nicta"       %% "rng"            % "1.1",
-  "org.scalaz"      %% "scalaz-core"    % "7.1.0-SNAPSHOT",
-  "org.scalaz"      %% "scalaz-effect"  % "7.1.0-SNAPSHOT",
+  "org.scalaz"      %% "scalaz-core"    % "7.1.0-M4",
+  "org.scalaz"      %% "scalaz-effect"  % "7.1.0-M4",
   "org.spire-math"  %% "spire"          % "0.7.1"
 )
 
