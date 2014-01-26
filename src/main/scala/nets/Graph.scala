@@ -3,6 +3,8 @@ package nets
 import scala.collection.immutable.{ Queue, Seq }
 
 import scalaz.{ ==>>, Order }
+import scalaz.std.anyVal._
+import scalaz.std.set._
 import scalaz.syntax.monoid._
 import scalaz.syntax.order._
 
@@ -30,6 +32,8 @@ final class Graph[A, W] private(
   def memberVertex(u: A)(implicit A: Order[A]): Boolean = adjList.member(u)
 
   def order: Int = adjList.size
+
+  def vertexSet: Set[A] = adjList.keySet
 
   def vertices: List[A] = adjList.keys
 
@@ -75,6 +79,29 @@ final class Graph[A, W] private(
     bfsAux(==>>.singleton(root, 0), Queue(root))
   }
 
+  def isConnected(implicit A: Order[A]): Boolean = directed.isStronglyConnected
+
+  def isWeaklyConnected(implicit A: Order[A], W: Rig[W]): Boolean = undirected.isConnected
+
+  def isStronglyConnected(implicit A: Order[A]): Boolean =
+    if (order =/= 1) {
+      val r = for {
+                r <- adjList.keys.headOption
+                b <- bfs(r)
+              } yield if (b.keySet === vertexSet) true else false
+      r.fold(false)(identity)
+    } else true
+
+  def undirected(implicit A: Order[A], W: Rig[W]): Graph[A, W] =
+    if (isDirected) {
+      val res = edges.map(e => e.to -> IndexedSet.singleton(e.reverse))
+      val al = ==>>.fromListWith(res)(_ union _)
+      new Graph(adjList |+| al, false)
+    } else this
+
+  def directed: Graph[A, W] =
+    if (isDirected) this else new Graph(adjList, true)
+
   val isUndirected: Boolean = !isDirected
 }
 
@@ -94,4 +121,19 @@ object Graph {
 
   def fromUndirectedEdges[A : Order, W : Rig](es: Seq[Edge[A, W]]): Graph[A, W] =
     es.foldLeft(nullUndirected[A, W])((g, e) => g.addEdge(e))
+
+  def fromDirectedEdgesWC[A : Order, W : Rig](es: Seq[Edge[A, W]]): Option[Graph[A, W]] = {
+    val g = fromDirectedEdges(es)
+    if (g.isWeaklyConnected) Some(g) else None
+  }
+
+  def fromDirectedEdgesSC[A : Order, W : Rig](es: Seq[Edge[A, W]]): Option[Graph[A, W]] = {
+    val g = fromDirectedEdges(es)
+    if (g.isStronglyConnected) Some(g) else None
+  }
+
+  def fromUndirectedEdgesC[A : Order, W : Rig](es: Seq[Edge[A, W]]): Option[Graph[A, W]] = {
+    val g = fromUndirectedEdges(es)
+    if (g.isConnected) Some(g) else None
+  }
 }
