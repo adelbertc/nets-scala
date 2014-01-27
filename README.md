@@ -1,10 +1,11 @@
 # nets
 Simple graph (graph theory-graph, not.. charts/plots) library for Scala.
-The library is designed primarily around my research work on large-scale
-graph analysis in the context of online social networks. Currently
-the only plan is to have a simple `Graph` class that handles directed,
-undirected, weighted, and unweighted graphs. The algorithms provided are
-not intended to be comprehensive.
+Simple graph library for Scala. The library design is based primarily on
+my prior research experience on large-scale graph analysis in the
+context of online social networks. Currently the only plan is to have a
+simple `Graph` class that handles directed, undirected, weighted, and
+unweighted graphs. The algorithms provided are not intended to be
+comprehensive.
 
 ## Design
 * The data structure backing the graph is an adjacency list, as many of the
