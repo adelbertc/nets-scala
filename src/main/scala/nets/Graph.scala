@@ -89,13 +89,13 @@ final class Graph[A, W] private(
     bfsAux(==>>.singleton(root, 0), Queue(root))
   }
 
+  def cost(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Option[W] =
+    (p.traverseU { case (u, v) => getEdge(u, v) }).flatMap(costE)
+
   def costE(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A], W: Rig[W]): Option[W] =
     if (hasPath(p.map(e => e.from -> e.to))) {
       Some(p.foldLeft(W.zero)((a, e) => W.plus(a, e.weight)))
     } else None
-
-  def cost(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Option[W] =
-    (p.traverseU { case (u, v) => getEdge(u, v) }).flatMap(costE)
 
   def hasPath(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Boolean =
     if (hasEdge(p.head._1, p.head._2))
