@@ -47,24 +47,23 @@ final class Graph[A, W] private(
 
   def edges: List[Edge[A, W]] = adjList.values.flatMap(_.toList)
 
-  def getEdge(u: A, v: A)(implicit A: Order[A]): Option[Edge[A, W]] =
+  def getEdge(u: A, v: A)(implicit A: Order[A], W: Rig[W]): Option[Edge[A, W]] =
     for {
       a <- adjList.lookup(u)
-      e <- a.toList.find(_.hasEndpoints(u, v))
-    } yield e
+      e <- Edge.unweighted[A, W](u, v)
+      i <- a.indexOf(e)
+      r <- a.elementAt(i)
+    } yield r
 
-  def hasEdge(u: A, v: A)(implicit A: Order[A]): Boolean =
+  def hasEdge(u: A, v: A)(implicit A: Order[A], W: Rig[W]): Boolean =
     getEdge(u, v).nonEmpty
-
-  def hasEdgeE(e: Edge[A, W])(implicit A: Order[A]): Boolean =
-    adjList.lookup(e.from).map(_.contains(e)).fold(false)(identity)
 
   def size: Int = {
     val bidirectionalEdges = adjList.fold(0)((_, ns, acc) => acc + ns.size)
     if (isDirected) bidirectionalEdges else bidirectionalEdges / 2
   }
 
-  def weight(u: A, v: A)(implicit A: Order[A]): Option[W] =
+  def weight(u: A, v: A)(implicit A: Order[A], W: Rig[W]): Option[W] =
     getEdge(u, v).map(_.weight)
 
   /* Traversal functions */
@@ -91,15 +90,12 @@ final class Graph[A, W] private(
   }
 
   def costE(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A], W: Rig[W]): Option[W] =
-    if (hasPathE(p)) {
+    if (hasPath(p.map(e => e.from -> e.to))) {
       Some(p.foldLeft(W.zero)((a, e) => W.plus(a, e.weight)))
     } else None
 
   def cost(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Option[W] =
     (p.traverseU { case (u, v) => getEdge(u, v) }).flatMap(costE)
-
-  def hasPathE(p: NonEmptyList[Edge[A, W]])(implicit A: Order[A], W: Rig[W]): Boolean =
-    hasPath(p.map(e => e.from -> e.to))
 
   def hasPath(p: NonEmptyList[(A, A)])(implicit A: Order[A], W: Rig[W]): Boolean =
     if (hasEdge(p.head._1, p.head._2))

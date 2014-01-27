@@ -17,7 +17,7 @@ object Edge extends EdgeInstances {
   def unweighted[A, W](from: A, to: A)(implicit A: Equal[A], W: Rig[W]): Option[Edge[A, W]] =
     if (from === to) None else Some(new Edge(from, to, W.one))
 
-  def weighted[A, W](from: A, to: A, weight: W)(implicit A: Equal[A], W: Rig[W]): Option[Edge[A, W]] =
+  def weighted[A, W](from: A, to: A, weight: W)(implicit A: Equal[A]): Option[Edge[A, W]] =
     if (from === to) None else Some(new Edge(from, to, weight))
 }
 
