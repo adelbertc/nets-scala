@@ -1,8 +1,11 @@
 package nets
 
+import java.io.PrintWriter
+
 import scala.collection.immutable.{ Queue, Seq }
 
-import scalaz.{ ==>>, Equal, NonEmptyList, Order }
+import scalaz.{ ==>>, Equal, NonEmptyList, Order, Show }
+import scalaz.effect.IO
 import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.std.option._
@@ -10,6 +13,7 @@ import scalaz.std.set._
 import scalaz.syntax.traverse._
 import scalaz.syntax.monoid._
 import scalaz.syntax.order._
+import scalaz.syntax.show._
 
 import spire.algebra.{ Rig }
 
@@ -168,5 +172,21 @@ trait GraphInstances {
     new Equal[Graph[A, W]] {
       override def equal(a1: Graph[A, W], a2: Graph[A, W]): Boolean =
         (a1.vertices === a2.vertices) && (a1.edges === a2.edges)
+    }
+}
+
+trait GraphFunctions {
+  def writeEdgelist[A : Show, W](graph: Graph[A, W], path: String): IO[Unit] =
+    IO {
+      val pw = new PrintWriter(path, "UTF-8")
+      graph.edges.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows))
+      pw.close()
+    }
+
+  def writeEdgelistW[A : Show, W : Show](graph: Graph[A, W], path: String): IO[Unit] =
+    IO {
+      val pw = new PrintWriter(path, "UTF-8")
+      graph.edges.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows ++ " " ++ e.weight.shows))
+      pw.close()
     }
 }
