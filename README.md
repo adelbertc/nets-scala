@@ -20,6 +20,9 @@ not intended to be comprehensive.
   * The nature of random graph generation and random walks requires fast
     random neighbor selection. I gladly trade logarithimic membership tests
     for effectively constant random access.
+* The `Order` instance for `Edge` only considers the endpoints, not the weight.
+  Seems a bit hack-y, I don't like it (see `Graph#getEdge`). Need to think
+  of a better way..
 
 ## License
 Please see LICENSE for licensing details.
