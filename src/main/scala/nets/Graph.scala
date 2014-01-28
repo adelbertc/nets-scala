@@ -51,6 +51,8 @@ final class Graph[A, W] private(
 
   def edges: List[Edge[A, W]] = adjList.values.flatMap(_.toList)
 
+  def undirectedEdges(implicit A: Order[A]): List[Edge[A, W]] = edges.filter(e => e.from < e.to)
+
   def getEdge(u: A, v: A)(implicit A: Order[A], W: Rig[W]): Option[Edge[A, W]] =
     for {
       a <- adjList.lookup(u)
@@ -176,19 +178,43 @@ trait GraphInstances {
 }
 
 trait GraphFunctions {
-  def writeEdgelist[A : Show, W](graph: Graph[A, W], path: String)(implicit A: Order[A]): IO[Unit] =
+  def writeAdjacencyList[A : Show, W](graph: Graph[A, W], path: String): IO[Unit] =
     IO {
       val pw = new PrintWriter(path, "UTF-8")
-      val toWrite = if (graph.isDirected) graph.edges else graph.edges.filter(e => e.from < e.to)
-      toWrite.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows))
+      graph.edges.groupBy(_.from).foreach {
+        case (f, nbors) =>
+          pw.println(f.shows)
+          nbors.foreach(n => pw.print(" " ++ n.to.shows))
+          pw.print("\n")
+      }
       pw.close()
     }
 
-  def writeEdgelistW[A : Show, W : Show](graph: Graph[A, W], path: String)(implicit A: Order[A]): IO[Unit] =
+  def writeEdgelist[A : Show, W](graph: Graph[A, W], path: String): IO[Unit] =
     IO {
       val pw = new PrintWriter(path, "UTF-8")
-      val toWrite = if (graph.isDirected) graph.edges else graph.edges.filter(e => e.from < e.to)
-      toWrite.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows ++ " " ++ e.weight.shows))
+      graph.edges.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows))
+      pw.close()
+    }
+
+  def writeEdgelistU[A : Show, W](graph: Graph[A, W], path: String)(implicit A: Order[A]): IO[Unit] =
+    IO {
+      val pw = new PrintWriter(path, "UTF-8")
+      graph.undirectedEdges.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows))
+      pw.close()
+    }
+
+  def writeEdgelistW[A : Show, W : Show](graph: Graph[A, W], path: String): IO[Unit] =
+    IO {
+      val pw = new PrintWriter(path, "UTF-8")
+      graph.edges.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows ++ " " ++ e.weight.shows))
+      pw.close()
+    }
+
+  def writeEdgelistUW[A : Show, W : Show](graph: Graph[A, W], path: String)(implicit A: Order[A]): IO[Unit] =
+    IO {
+      val pw = new PrintWriter(path, "UTF-8")
+      graph.undirectedEdges.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows ++ " " ++ e.weight.shows))
       pw.close()
     }
 }
