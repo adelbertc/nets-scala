@@ -14,6 +14,11 @@ import scalaz.Scalaz._
 import spire.algebra.{ Rig }
 import spire.std.int._
 
+/** Graph backed by an adjacency list.
+  *
+  * The graph can be { directed, undirected } x { weighted, unweighted }
+  * with no self-loops allowed (enforced by {{nets.Edge}}.)
+  */
 final class Graph[A, W] private(
     private val adjList: A ==>> IndexedSet[Edge[A, W]],
     val isDirected: Boolean) {
@@ -133,6 +138,18 @@ final class Graph[A, W] private(
   val isUndirected: Boolean = !isDirected
 }
 
+/** Functions associated with Graph.
+  *
+  * Functions are often suffixed with a letter. Here's
+  * the general idea of how to decode the letters.
+  *
+  * C  Connected
+  * D  Directed
+  * U  Undirected
+  * W  Weighted
+  * SC Strongly connected
+  * WC Weakly connected
+  */
 object Graph extends GraphInstances {
   def emptyDirected[A : Order, W](vs: Seq[A]): Graph[A, W] =
     vs.foldLeft(nullDirected[A, W])((g, v) => g.addVertex(v))
