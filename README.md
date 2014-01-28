@@ -7,9 +7,9 @@ simple `Graph` class that handles directed, undirected, weighted, and
 unweighted graphs. The algorithms provided are not intended to be
 comprehensive.
 
-** The code *compiles* but it can't really run because Atto (parsing)
+**The code *compiles* but it can't really run because Atto (parsing)
 depends on Scalaz 7.0.x and Nets uses Scalaz 7.1.x (Monoid instance for
-`scalaz.==>>`). \o/ **
+`scalaz.==>>`). \o/**
 
 ## Design
 * The data structure backing the graph is an adjacency list, as many of the
