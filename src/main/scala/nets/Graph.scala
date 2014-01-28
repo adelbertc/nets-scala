@@ -176,17 +176,19 @@ trait GraphInstances {
 }
 
 trait GraphFunctions {
-  def writeEdgelist[A : Show, W](graph: Graph[A, W], path: String): IO[Unit] =
+  def writeEdgelist[A : Show, W](graph: Graph[A, W], path: String)(implicit A: Order[A]): IO[Unit] =
     IO {
       val pw = new PrintWriter(path, "UTF-8")
-      graph.edges.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows))
+      val toWrite = if (graph.isDirected) graph.edges else graph.edges.filter(e => e.from < e.to)
+      toWrite.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows))
       pw.close()
     }
 
-  def writeEdgelistW[A : Show, W : Show](graph: Graph[A, W], path: String): IO[Unit] =
+  def writeEdgelistW[A : Show, W : Show](graph: Graph[A, W], path: String)(implicit A: Order[A]): IO[Unit] =
     IO {
       val pw = new PrintWriter(path, "UTF-8")
-      graph.edges.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows ++ " " ++ e.weight.shows))
+      val toWrite = if (graph.isDirected) graph.edges else graph.edges.filter(e => e.from < e.to)
+      toWrite.foreach(e => pw.println(e.from.shows ++ " " ++ e.to.shows ++ " " ++ e.weight.shows))
       pw.close()
     }
 }
