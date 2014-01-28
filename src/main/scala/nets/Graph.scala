@@ -1,21 +1,18 @@
 package nets
 
-import java.io.PrintWriter
+import atto._
+import atto.Atto._
+
+import java.io.{ PrintWriter }
 
 import scala.collection.immutable.{ Queue, Seq }
 
-import scalaz.{ ==>>, Equal, NonEmptyList, Order, Show }
+import scalaz._
 import scalaz.effect.IO
-import scalaz.std.anyVal._
-import scalaz.std.list._
-import scalaz.std.option._
-import scalaz.std.set._
-import scalaz.syntax.traverse._
-import scalaz.syntax.monoid._
-import scalaz.syntax.order._
-import scalaz.syntax.show._
+import scalaz.Scalaz._
 
 import spire.algebra.{ Rig }
+import spire.std.int._
 
 final class Graph[A, W] private(
     private val adjList: A ==>> IndexedSet[Edge[A, W]],
@@ -178,6 +175,91 @@ trait GraphInstances {
 }
 
 trait GraphFunctions {
+  private val rawEdge: Parser[(String, String)] =
+    for {
+      u <- stringOf(letterOrDigit)
+      _ <- many(spaceChar)
+      v <- stringOf(letterOrDigit)
+    } yield u -> v
+
+  private val rawEdgeW: Parser[(String, String, Int)] =
+    for {
+      e <- rawEdge
+      _ <- many(spaceChar)
+      w <- int
+    } yield (e._1, e._2, w)
+
+  private val adjacent: Parser[String] =
+    for {
+      _ <- many(spaceChar)
+      v <- stringOf(letterOrDigit)
+    } yield v
+
+  private val rawAdjList: Parser[(String, List[String])] =
+    for {
+      u <- stringOf(letterOrDigit)
+      _ <- many(spaceChar)
+      v <- many(adjacent)
+    } yield (u, v)
+
+  def readAdjacencyList(path: String): OptionT[IO, Graph[String, Int]] =
+    OptionT {
+      IO {
+        val in = scala.io.Source.fromFile(path).getLines().toList
+        val edges =
+          in.traverseU { ls =>
+            for {
+              al <- rawAdjList.parseOnly(ls).option
+              es <- al._2.traverseU(v => Edge.unweighted[String, Int](al._1, v))
+            } yield es
+          }
+        edges.map(es => Graph.fromUndirectedEdges[String, Int](es.join))
+      }
+    }
+
+  def readEdgelist(path: String): OptionT[IO, Graph[String, Int]] =
+    OptionT {
+      IO {
+        val in = scala.io.Source.fromFile(path).getLines().toList
+        val edges =
+          in.traverseU { ls =>
+            for {
+              re <- rawEdge.parseOnly(ls).option
+              e  <- Edge.unweighted[String, Int](re._1, re._2)
+            } yield e
+          }
+        edges.map(Graph.fromUndirectedEdges[String, Int])
+      }
+    }
+
+  def readEdgelistC(path: String): OptionT[IO, Graph[String, Int]] =
+    for {
+      g <- readEdgelist(path)
+      r <- if (g.isConnected) OptionT(IO(Option(g))) else OptionT(IO(none[Graph[String, Int]]))
+    } yield r
+
+  def readEdgelistCW(path: String): OptionT[IO, Graph[String, Int]] =
+    for {
+      g <- readEdgelistW(path)
+      r <- if (g.isConnected) OptionT(IO(Option(g))) else OptionT(IO(none[Graph[String, Int]]))
+    } yield r
+
+  def readEdgelistW(path: String): OptionT[IO, Graph[String, Int]] =
+    OptionT {
+      IO {
+        val in = scala.io.Source.fromFile(path).getLines().toList
+        val edges =
+          in.traverseU { ls =>
+            for {
+              re <- rawEdgeW.parseOnly(ls).option
+              e  <- Edge.weighted[String, Int](re._1, re._2, re._3)
+            } yield e
+          }
+
+        edges.map(Graph.fromUndirectedEdges[String, Int])
+      }
+    }
+
   def writeAdjacencyList[A : Show, W](graph: Graph[A, W], path: String): IO[Unit] =
     IO {
       val pw = new PrintWriter(path, "UTF-8")

@@ -11,7 +11,9 @@ scalaVersion := "2.10.3"
 licenses += ("BSD-3-Clause", url("http://www.opensource.org/licenses/BSD-3-Clause"))
 
 resolvers ++= Seq(
-  "Sonatype Public" at "https://oss.sonatype.org/content/groups/public"
+  "Sonatype Public"     at "https://oss.sonatype.org/content/groups/public",
+  "Sonatype Releases"   at "https://oss.sonatype.org/content/repositories/releases",
+  "tpolecat"            at "https://dl.bintray.com/tpolecat/maven"
 )
 
 addCompilerPlugin("org.brianmckenna" %% "wartremover" % "0.7")
@@ -20,7 +22,8 @@ libraryDependencies ++= Seq(
   "com.nicta"       %% "rng"            % "1.1",
   "org.scalaz"      %% "scalaz-core"    % "7.1.0-M4",
   "org.scalaz"      %% "scalaz-effect"  % "7.1.0-M4",
-  "org.spire-math"  %% "spire"          % "0.7.1"
+  "org.spire-math"  %% "spire"          % "0.7.1",
+  "org.tpolecat"    %% "atto"           % "0.1"
 )
 
 scalacOptions ++= Seq(
