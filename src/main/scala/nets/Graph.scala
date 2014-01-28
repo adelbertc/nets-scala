@@ -136,6 +136,9 @@ final class Graph[A, W] private(
     if (isDirected) this else new Graph(adjList, true)
 
   val isUndirected: Boolean = !isDirected
+
+  def fold[B](directed: Graph[A, W] => B, undirected: Graph[A, W] => B): B =
+    if (isDirected) directed(this) else undirected(this)
 }
 
 /** Functions associated with Graph.
