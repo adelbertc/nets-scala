@@ -150,7 +150,7 @@ final class Graph[A, W] private(
   * SC Strongly connected
   * WC Weakly connected
   */
-object Graph extends GraphInstances {
+object Graph extends GraphInstances with GraphFunctions {
   def emptyDirected[A : Order, W](vs: Seq[A]): Graph[A, W] =
     vs.foldLeft(nullDirected[A, W])((g, v) => g.addVertex(v))
 
