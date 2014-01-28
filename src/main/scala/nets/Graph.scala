@@ -202,7 +202,7 @@ trait GraphFunctions {
       v <- many(adjacent)
     } yield (u, v)
 
-  def readAdjacencyList(path: String): OptionT[IO, Graph[String, Int]] =
+  def readAdjacencyListD(path: String): OptionT[IO, Graph[String, Int]] =
     OptionT {
       IO {
         val in = scala.io.Source.fromFile(path).getLines().toList
@@ -213,11 +213,14 @@ trait GraphFunctions {
               es <- al._2.traverseU(v => Edge.unweighted[String, Int](al._1, v))
             } yield es
           }
-        edges.map(es => Graph.fromUndirectedEdges[String, Int](es.join))
+        edges.map(es => Graph.fromDirectedEdges[String, Int](es.join))
       }
     }
 
-  def readEdgelist(path: String): OptionT[IO, Graph[String, Int]] =
+  def readAdjacencyListU(path: String): OptionT[IO, Graph[String, Int]] =
+    readAdjacencyListD(path).map(_.undirected)
+
+  def readEdgelistD(path: String): OptionT[IO, Graph[String, Int]] =
     OptionT {
       IO {
         val in = scala.io.Source.fromFile(path).getLines().toList
@@ -228,23 +231,32 @@ trait GraphFunctions {
               e  <- Edge.unweighted[String, Int](re._1, re._2)
             } yield e
           }
-        edges.map(Graph.fromUndirectedEdges[String, Int])
+        edges.map(Graph.fromDirectedEdges[String, Int])
       }
     }
 
-  def readEdgelistC(path: String): OptionT[IO, Graph[String, Int]] =
+  def readEdgelistU(path: String): OptionT[IO, Graph[String, Int]] =
+    readEdgelistD(path).map(_.undirected)
+
+  def readEdgelistDC(path: String): OptionT[IO, Graph[String, Int]] =
     for {
-      g <- readEdgelist(path)
+      g <- readEdgelistD(path)
       r <- if (g.isConnected) OptionT(IO(Option(g))) else OptionT(IO(none[Graph[String, Int]]))
     } yield r
 
-  def readEdgelistCW(path: String): OptionT[IO, Graph[String, Int]] =
+  def readEdgelistUC(path: String): OptionT[IO, Graph[String, Int]] =
+    readEdgelistDC(path).map(_.undirected)
+
+  def readEdgelistDCW(path: String): OptionT[IO, Graph[String, Int]] =
     for {
-      g <- readEdgelistW(path)
+      g <- readEdgelistDW(path)
       r <- if (g.isConnected) OptionT(IO(Option(g))) else OptionT(IO(none[Graph[String, Int]]))
     } yield r
 
-  def readEdgelistW(path: String): OptionT[IO, Graph[String, Int]] =
+  def readEdgelistUCW(path: String): OptionT[IO, Graph[String, Int]] =
+    readEdgelistDCW(path).map(_.undirected)
+
+  def readEdgelistDW(path: String): OptionT[IO, Graph[String, Int]] =
     OptionT {
       IO {
         val in = scala.io.Source.fromFile(path).getLines().toList
@@ -256,9 +268,12 @@ trait GraphFunctions {
             } yield e
           }
 
-        edges.map(Graph.fromUndirectedEdges[String, Int])
+        edges.map(Graph.fromDirectedEdges[String, Int])
       }
     }
+
+  def readEdgelistUW(path: String): OptionT[IO, Graph[String, Int]] =
+    readEdgelistDW(path).map(_.undirected)
 
   def writeAdjacencyList[A : Show, W](graph: Graph[A, W], path: String): IO[Unit] =
     IO {
