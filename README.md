@@ -8,7 +8,7 @@ unweighted graphs. The algorithms provided are not intended to be
 comprehensive.
 
 **The code *compiles* but it can't really run because Atto (parsing)
-depends on Scalaz 7.0.x and Nets uses Scalaz 7.1.x (Monoid instance for
+depends on Scalaz 7.0.x and Nets uses Scalaz 7.1.x (`Monoid` instance for
 `scalaz.==>>`). \o/**
 
 ## Design
