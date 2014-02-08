@@ -7,10 +7,10 @@ simple `Graph` class that handles directed, undirected, weighted, and
 unweighted graphs. The algorithms provided are not intended to be
 comprehensive.
 
-**2014 Feb 04:** Most work will be done on the
+**2014 Feb 07:** Most work will be done on the
 [Haskell](https://github.com/adelbertc/nets-hs) implementation while I
 am experimenting with implementations (and also practicing my Haskell).
-Once I begin converging on a design I will port it over to Scala.
+Once I begin converging on a design I *may* port it over to Scala.
 
 **The code *compiles* but it can't really run because Atto (parsing)
 depends on Scalaz 7.0.x and Nets uses Scalaz 7.1.x (`Monoid` instance for
